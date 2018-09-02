@@ -1,42 +1,61 @@
-# Firewarden
+# Corralito : Versión de Firewarden en castellano
 
-Firewarden is a bash script used to open a program within a private
-[Firejail][1] sandbox.
+Firewarden es un guión en bash que se usa para abrir un programa o una dirección 
+web adentro de un arenero privado [Firejail][1]. Por eso, elegí traducirlo como 
+'corralito', que hace juego con 'arenero'. Mientras que firewarden debería 
+traducirse como guardabosque, lo que confunde un poco. 
 
-Firewarden will launch the given program within a Firejail sandbox with a
-private home directory on a temporary filesystem. Networking is enabled by
-default, but may be disabled.
+La utilidad de mi traducción estimo que tiene una duración tan breve como la que 
+tarde el desarrollador en encontrar la forma de traducir la salida esperada por 
+el administrador de redes al idioma del usuario. En este caso, lo que espera leer 
+en la salida de NetworkManager es "connected" lo que en mi equipo, nunca ocurrirá, 
+porque la salida está traducida como "conectado". Igual que en cualquier sistema 
+operativo Linux en castellano...
 
-This may be useful for a number of applications, but was created specifically
-with Chromium in mind. To open a [shady site][2] within an isolated and
-temporary sandbox -- or simply to help further protect your online banking --
-prepend your normal command with `firewarden`:
+Igual, es una oportunidad para todos los que quieran acostumbrarse a usar FireJail 
+en castellano. Firewarden es mucho mas simple de optimizar. Y es muy poco lo que 
+hay que aprender a usar... Voy a reemplazar en este documento, donde dice Firewarden 
+por Corralito, pero entiéndase que solo uso este nombre al llamar a mi guión. 
+Internamente, se conserva el nombre original Firewarden. Incluso al crear el directorio 
+virtual (aunque debería llamarlo FireJail)...
 
-    $ firewarden chromium http://www.forbes.com
+Corralito (Firewarden) lanzará el programa esperado, usando un arenero Firejail con 
+un directorio home privado en un sistema temporario. La red está activada predeterminadamente,
+aunque puede desactivarse.
 
-When using Firewarden to run `chromium` or `google-chrome`, the script will
-prevent the first run greeting, disable the default browser check, and prevent
-the [WebRTC IP leak][3].
+Este guion puede resultar util con muchas aplicaciones, aunque se creó específicamente para 
+usar Chromium. <(n.t.)> Hay webs de video que no funcionan en otros navegadores.
+Puede usarse para visitar un sitio "sospechoso" ( e.i. [shady site][2]  ) dentro
+de un arenero aislado y temporario -- o simplemente para proteger nuestro banco
+web -- solo hay que agregarle a nuestro comando habitual la palabra 'corralito'
+(<(n.t.)> contando con que hemos puesto el guión en un directorio con derechos de ejecutable):
 
-## Local Files
+    $ corralito chromium http://www.forbes.com
 
-If the final argument appears to be a local file, Firewarden will copy the file
-into a temporary directory. This directory will be used by Firejail as the user
-home. After the program has closed, the temporary directory and all of its
-contents are deleted.
+Al usar corralito (firewarden) para lanzar `chromium` o `google-chrome`, el guión evitará
+el saludo al nuevo usuario, deshabilitará la comprobación de navegador privilegiado y 
+evitará filtraciones de IP WebRTC ( e.i. [WebRTC IP leak][3] ). 
 
-By default, networking is disabled and a private `/dev` is used when viewing a
-local file.
+## Archivos Locales
 
-This is particularly useful for mitigating harm caused by opening potentially
-malicious files, such as PDF and JPGs. Add it to your mailcap to protect your
-system against shady email attachments.
+Cuando el último argumento parece ser un archivo local, corralito (firewarden) 
+copiará el archivo en un directorio temporario. Este directorio lo usará Firejail
+como home de usuario. Al cerrar el programa, tanto el directorio temporal como 
+todo su contenido se borrarrán.
 
-For example, you may want to view the file `~/notatrap.pdf` with the PDF reader `zathura`.
+La red estará desactivada, por omisión. Y para usar el archivo local, también se
+creará un `/dev` privado.
 
-    $ firewarden zathura ~/notatrap.pdf
+Esto es especialmente útil, para mitigar el daño que podría causar la apertura de 
+archivos potencialmente maliciosos. Tales como PDFs o JPGs. Asócielo como mailcap
+(n.t. Mime Type o tipo de archivo de apertura) para proteger sl sistema contra 
+archivos adjunto sospechosos en nuestros emails.
 
-This is the equivalent of doing:
+Por ejemplo, si queremos ver un archivo `~/notatrap.pdf` con el lector de PDF `zatura`...
+   
+    $ corralito zathura ~/notatrap.pdf
+
+Es lo mismo que si hiciéramos lo siguiente:
 
     $ export now=`date --iso-8601=s`
     $ mkdir -p $XDG_RUNTIME_DIR/$USER/firewarden/$now
@@ -44,29 +63,30 @@ This is the equivalent of doing:
     $ firejail --net=none --private-dev --private=$XDG_RUNTIME_DIR/$USER/firewarden/$now zathura notatrap.pdf
     $ rm -r $XDG_RUNTIME_DIR/$USER/firewarden/$now
 
-## Options
+## Opciones
 
-### Network
+### Redes
 
-Networking is enabled by default, unless viewing local files (which most of the
-time do not need network access).
+Predeterminadamente, las redes están habilitadas, a menos que queramos usar un archivo
+local (que en la mayoría de los casos, no necesita acceder a ninguna red).
 
-The user may explicitly enable or disable network access, overriding the default behavior.
+El usuario puede explícitamente habilitar o deshabilitar el acceso a redes, desestimando
+el comportamiento por omisión.
 
-    # deny network access, regardless of the defaults.
-    $ firewarden -n ...
-    # enable network access, regardless of the defaults.
-    $ firewarden -N ...
+    # (-n) negando el acceso a redes, desestimando su comportamiento por omisión.
+    $ corralito -n ...
+    # (-N) habilitando el acceso a redes, desestimando su comportamiento por omisión.
+    $ corralito -N ...
 
-Optionally, the sandbox may be launched with an isolated network namespace and
-a restrictive netfilter. Unless otherwise specified, [NetworkManager][4] will
-be used to determine the first connected network interface. This interface will
-be used to create the new network namespace.
+Opcionalmente, el arenero puede activarse con un nombre-espacio de red aislado
+y restringido. A menos que se declare lo contrario, se usará [NetworkManager][4]
+para conocer el primer interfaz de red conectado. Este interfaz se usará para 
+crear el nuevo nombre-espacio de red.
 
-    # isolate the network, using the first connected interface.
-    $ firewarden -i ...
-    # isolate the network, using the specified interface.
-    $ firewarden -I eth0 ...
+    # aislar la red usando el primer interfaz conectado.
+    $ corralito -i ...
+    # o, aislar la red, usando el interfaz ya conectado.
+    $ corralito -I eth0 ...
 
 When isolating the network, Firejail's default client network filter will be
 used in the new network namespace.
