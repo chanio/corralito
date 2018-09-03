@@ -1,6 +1,6 @@
 # Corralito : Versión de Firewarden en castellano
 
-Firewarden es un guión en bash que se usa para abrir un programa o una dirección 
+[Firewarden][0] es un guión en bash que se usa para abrir un programa o una dirección 
 web adentro de un arenero privado [Firejail][1]. Por eso, elegí traducirlo como 
 'corralito', que hace juego con 'arenero'. Mientras que firewarden debería 
 traducirse como guardabosque, lo que confunde un poco. 
@@ -88,8 +88,8 @@ crear el nuevo nombre-espacio de red.
     # o, aislar la red, usando el interfaz ya conectado.
     $ corralito -I eth0 ...
 
-When isolating the network, Firejail's default client network filter will be
-used in the new network namespace.
+Al aislar la red, Firejail usará el filtro de cliente de redes por omisión
+para el nuevo nombre-espacio de redes.
 
 ```
 *filter
@@ -98,11 +98,11 @@ used in the new network namespace.
 :OUTPUT ACCEPT [0:0]
 -A INPUT -i lo -j ACCEPT
 -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-# allow ping
+# permitir hacer ping
 -A INPUT -p icmp --icmp-type destination-unreachable -j ACCEPT
 -A INPUT -p icmp --icmp-type time-exceeded -j ACCEPT
 -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
-# drop STUN (WebRTC) requests
+# liberar solicitudes STUN (WebRTC)
 -A OUTPUT -p udp --dport 3478 -j DROP
 -A OUTPUT -p udp --dport 3479 -j DROP
 -A OUTPUT -p tcp --dport 3478 -j DROP
@@ -114,26 +114,27 @@ COMMIT
 
 ### /dev
 
-Optionally, a new `/dev` can be created to further restrict the sandbox. This
-has the effect of preventing access to audio input and output, as well as any
-webcams. It is enabled by default when viewing local files.
+Opcionalmente, puede crearse un nuevo `/dev` para limitar mas el arenero. Este
+sirve para evitar el acceso a la entrada y salida del audio, al igual que a la
+cámara web. Se habilita por omisión al usar archivos locales.
 
-    # create a private /dev, regardless of the defaults.
-    $ firewarden -d ...
-    # do not create a private /dev, regardless of the defaults.
-    $ firewarden -D ...
 
-## Examples
+    # crear un /dev privado, en cualquier circumstancia.
+    $ corralito -d ...
+    # no crear un /dev privado, en ningún caso.
+    $ corralito -D ...
 
-    $ firewarden -d -i chromium https://www.nsa.gov/ia/ &
-    $ firewarden zathura /mnt/usb/nsa-ant.pdf &
-    $ firewarden chromium https://www.youtube.com/watch?v=bDJb8WOJYdA &
+## Ejemplos
+
+    $ corralito -d -i chromium https://www.nsa.gov/ia/ &
+    $ corralito zathura /mnt/usb/nsa-ant.pdf &
+    $ corralito chromium https://www.youtube.com/watch?v=bDJb8WOJYdA &
     $ firejail --list
     630:pigmonkey:/usr/bin/firejail --private --net=enp0s25 --netfilter --private-dev chromium --no-first-run --no-default-browser-check https://www.nsa.gov/ia/
     31788:pigmonkey:/usr/bin/firejail --private=/run/user/1000/firewarden/2016-01-31T16:09:14-0800 --net=none --private-dev zathura nsa-ant.pdf
     32255:pigmonkey:/usr/bin/firejail --private chromium --no-first-run --no-default-browser-check https://www.youtube.com/watch?v=bDJb8WOJYdA
 
-
+[0]: https://github.com/pigmonkey/firewarden
 [1]: https://github.com/netblue30/firejail
 [2]: http://www.engadget.com/2016/01/08/you-say-advertising-i-say-block-that-malware/
 [3]: https://www.privacytools.io/webrtc.html
