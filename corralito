@@ -10,17 +10,18 @@
 #
 ###############################################################################
 
-usage() { echo " [corralito] (firewarden traducido al castellano) "
-    echo "Uso: corralito [OPCION...] [PROGRAMA] [ARGS. D/PROGRAMA...]
-Abre un programa en un arenero privado con Firejail.
+usage() { echo " corralito (firewarden traducido al castellano) "
+    echo "Uso: 
+ corralito [OPCION...] <PROGRAMA> [ARGS. D/PROGRAMA...]
+ Abre un programa en un arenero privado con Firejail.
 
-Cuando el último argumento es un archivo local, se desactiva la red y por omisión,
-se creará un nuevo /dev.
+ Cuando el último argumento es un archivo local, se desactiva la red y por omisión,
+ se creará un nuevo /dev.
 
-Para un mejor aislamiento, cuando la red está habilitada, se puede lanzar el
-arenero con un nuevo espacio-nombre de red y un filtro de redes restrictivo.
-A menos que se especifique otra cosa, se usará el primer interfaz conectado
-( como declara el administrador de redes, NetworkManager ).
+ Para un mejor aislamiento, cuando la red está habilitada, se puede lanzar el
+ arenero con un nuevo espacio-nombre de red y un filtro de redes restrictivo.
+ A menos que se especifique otra cosa, se usará el primer interfaz conectado
+ ( como declara el administrador de redes, NetworkManager ).
 
 Opciones:
     -n      negar acceso a redes (implícito al consultar archivos locales)
