@@ -1,4 +1,5 @@
 # Corralito : Versión de Firewarden en castellano
+![FireJail's Proposed Logo](./firejail.png "My FireJail logo")
 
 [Firewarden][0] es un guión en bash que se usa para abrir un programa o una dirección 
 web adentro de un arenero privado [Firejail][1]. Por eso, elegí traducirlo como 
@@ -134,8 +135,14 @@ cámara web. Se habilita por omisión al usar archivos locales.
     31788:pigmonkey:/usr/bin/firejail --private=/run/user/1000/firewarden/2016-01-31T16:09:14-0800 --net=none --private-dev zathura nsa-ant.pdf
     32255:pigmonkey:/usr/bin/firejail --private chromium --no-first-run --no-default-browser-check https://www.youtube.com/watch?v=bDJb8WOJYdA
 
+
 [0]: https://github.com/pigmonkey/firewarden
-[1]: https://github.com/netblue30/firejail
+[1]: https://github.com/netblue30/firejail 
 [2]: http://www.engadget.com/2016/01/08/you-say-advertising-i-say-block-that-malware/
 [3]: https://www.privacytools.io/webrtc.html
 [4]: https://wiki.gnome.org/Projects/NetworkManager
+
+*****
+<img src="./firejail127.png" title="My FireJail Icon">My FireJail's proposed icon (feel free to use it)</img>
+
+*****
