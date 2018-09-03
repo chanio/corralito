@@ -1,0 +1,193 @@
+#!/bin/bash
+# [corralito] (firewarden < https://github.com/pigmonkey/firewarden > traducido al castellano)
+# Abrir un programa dentro de un arenero privado con Firejail
+#  
+# Cuando el último argumento es un archivo local, se copiará el archivo a
+# un directorio temporario. Este directorio, lo usará Firejail como su home.
+# Una vez concluído el programa, se borran el directorio temporario y todo 
+# su contenido. La red está desactivada por omisión. Y se crea un /dev privado
+# al consultar un archivo local.
+#
+###############################################################################
+
+usage() { echo " [corralito] (firewarden traducido al castellano) "
+    echo "Uso: corralito [OPCION...] [PROGRAMA] [ARGS. D/PROGRAMA...]
+Abre un programa en un arenero privado con Firejail.
+
+Cuando el último argumento es un archivo local, se desactiva la red y por omisión,
+se creará un nuevo /dev.
+
+Para un mejor aislamiento, cuando la red está habilitada, se puede lanzar el
+arenero con un nuevo espacio-nombre de red y un filtro de redes restrictivo.
+A menos que se especifique otra cosa, se usará el primer interfaz conectado
+( como declara el administrador de redes, NetworkManager ).
+
+Opciones:
+    -n      negar acceso a redes (implícito al consultar archivos locales)
+    -N      permitir acceso a redes (implícito cuando consultamos URLs) 
+    -i      aislar la red con nuevo espacio-nombre y un filtro restrictivo
+            usando el primer interfaz conectado (-N está implícito)
+    -I      aislar la red con nuevo espacio-nombre y un filtro restrictivo
+            usando el interfaz que especifiquemos (-N está implícito)
+    -d      crear un nuevo directorio en /dev (implícito al ver arch.local)
+    -D      NO crear un nuevo directorio en /dev (implícito al ver URLs) "
+}
+
+netisolate() {
+    # Aislando la red por pedido
+    if [[ -n "$isolate_network" ]]; then
+        # Obtener el primer dispositivo conectado, cuando no se especifica otra interfaz.
+        ## (t.n) HERE, connected NEEDS TO BE \+-- TRANSLATED INTO SPANISH: conectado
+        if [[ -z "$interface" ]]; then
+            interface=$(nmcli d | grep -m 1 conectado | cut -d ' ' -f 1)
+        fi
+        netopt="--net=$interface --netfilter"
+    fi
+}
+
+process_opts() {
+    # Cuando usamos un archivo local, desactivar acceso a redes y crear un /dev privado
+    # a menos que se indique lo contrario.
+    if [ -n "$file_name" ]; then
+        netopt="--net=none"
+        devopt="--private-dev"
+        if [[ -n "$enable_network" ]]; then
+            netopt=""
+            netisolate
+        fi
+        if [ "$private_dev" = false ]; then
+            devopt=""
+        fi
+    # Sino, habilitar el acceso a redes y no crear un /dev privado 
+    # a menos que se indique lo contrario.
+    else
+        if [[ -n "$disable_network" ]]; then
+            netopt="--net=none"
+        else
+            netisolate
+        fi
+        if [ "$private_dev" = true ]; then
+            devopt="--private-dev"
+        fi
+    fi
+}
+
+app_opts() {
+    # Cuando la aplicación es Chromium o Google Chrome, evitar el saludo
+    # iniciatico , inhabilitar la comprobación de "navegador predeterminado" y 
+    # evitar filtración IP de WebRTC.
+    case $app in
+        "chromium"|"google-chrome")
+            appopt=("--no-first-run" "--no-default-browser-check" "--enforce-webrtc-ip-permission-check")
+            ;;
+    esac
+}
+
+build_dir() {
+    # Cuando usamos jail para un archivo local, crear un directorio temporario
+    # que haga de home de firejail y copiar en el mismo, el archivo solicitado.
+    ## (t.n) HERE I PRESERVE firewarden NAME INSTEAD OF USING THE NAME OF THIS SCRIPT
+    if [ -n "$XDG_RUNTIME_DIR" ]; then
+        dir=$XDG_RUNTIME_DIR/firewarden/$now
+    else
+        dir=/tmp/$USER/firewarden/$now
+    fi
+    mkdir -p "$dir"
+    cp "$file_path" "$dir"
+}
+
+file_check() {
+    # Si el último argumento que queda es un archivo local: obtener su ruta 
+    # completa, nombre del archivo. Y armar un directorio temporario para el.
+    file_path=$(readlink -e "$last")
+    if [ $? -eq 0 ]; then
+        file_name=$(basename "$file_path")
+        build_dir
+        homeopt="--private=$dir"
+    else
+        homeopt="--private"
+    fi
+}
+
+execute() {
+    /usr/bin/firejail --private-srv=firewarden-"$now" --private-opt=firewarden-"$now" $homeopt $netopt $devopt "$app" "${appopt[@]}" "${finalargs[@]}"
+}
+
+cleanup() {
+    # Eliminar recursivamente el directorio temporario y todo su contenido.
+    if [ -n "$dir" ]; then
+        rm -fr "$dir"
+    fi
+}
+
+while getopts "I:idDnNh" opt; do
+    case $opt in
+        n)
+            disable_network=true
+            ;;
+        N)
+            enable_network=true
+            ;;
+        i)
+            enable_network=true
+            isolate_network=true
+            ;;
+        I)
+            enable_network=true
+            isolate_network=true
+            interface=$OPTARG
+            ;;
+        d)
+            private_dev=true
+            ;;
+        D)
+            private_dev=false
+            ;;
+        h)
+            usage
+            exit
+            ;;
+        :)
+            echo "La opción -$OPTARG requiere de un argumento."
+            usage
+            exit
+            ;;
+    esac
+done
+
+# Obtener fechaThoraZH actual.
+now=$(date --iso-8601=s)
+
+# Ver si el ultimo argumento es un archivo local.
+last=${*: -1}
+file_check
+
+# Procesar las opciones solicitadas.
+process_opts
+
+# Quitar de los argumentos, las opciones ya procesadas.
+shift "$((OPTIND - 1))"
+
+# Ahora, el primer argumento es la aplicación.
+app=$1
+
+# Quitar la aplicación de los argumentos restantes.
+shift
+
+# Agregar los argumentos correspondientes para la aplicación.
+app_opts
+
+# Si el último argumento era un archivo local, rearmar los argumentos finales.
+finalargs=( "$@" )
+if [ -n "$file_name" ]; then
+    arg_length=$(($#-1))
+    args=( ${@:1:$arg_length} )
+    if [ ${#args[@]} -eq 0 ]; then
+        finalargs=( "$file_name" )
+    else
+        finalargs=( "${args[@]}" "$file_name" )
+    fi
+fi
+
+execute
+cleanup
